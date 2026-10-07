@@ -152,7 +152,7 @@ def admin_login():
             <div class="geo-logo">FUNAAB<span>GEOPHYSICS</span></div>
             <div class="badge">RESTRICTED ACCESS</div>
             <h2>Admin Login Portal</h2>
-            <p>Enter strict admin passcode (geo278k) to manage broadcasts.</p>
+            <p>Enter strict admin passcode to manage broadcasts.</p>
             {% if error %}<div class="error">{{ error }}</div>{% endif %}
             <form method="POST">
                 <input type="password" name="passcode" placeholder="••••••••" required autofocus>
