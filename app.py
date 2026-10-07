@@ -790,3 +790,77 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, threaded=True)
+from datetime import datetime, timedelta
+
+@app.route('/admin/create_attendance', methods=['POST'])
+def create_attendance():
+    if session.get('role') != 'admin':
+        return redirect(url_for('admin_login'))
+    
+    course_code = request.form.get('course_code')
+    title = request.form.get('title')
+    duration = int(request.form.get('duration', 10)) # default 10 mins
+    
+    expires_at = datetime.now() + timedelta(minutes=duration)
+    
+    with sqlite3.connect('geophysics.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO attendance_sessions (course_code, title, duration_minutes, expires_at)
+            VALUES (?, ?, ?, ?)
+        ''', (course_code, title, duration, expires_at.strftime('%Y-%m-%d %H:%M:%S')))
+        conn.commit()
+        
+    flash('Attendance session opened successfully!', 'success')
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/attendance', methods=['GET', 'POST'])
+def mark_attendance():
+    # Get active sessions that haven't expired yet
+    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    with sqlite3.connect('geophysics.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM attendance_sessions WHERE expires_at > ? ORDER BY id DESC', (now_str,))
+        active_sessions = cursor.fetchall()
+        
+    if request.method == 'POST':
+        session_id = request.form.get('session_id')
+        matric_no = request.form.get('matric_no').strip().upper()
+        student_name = request.form.get('student_name').strip()
+        
+        with sqlite3.connect('geophysics.db') as conn:
+            cursor = conn.cursor()
+            # Check if session is still active
+            cursor.execute('SELECT expires_at FROM attendance_sessions WHERE id = ?', (session_id,))
+            res = cursor.fetchone()
+            if not res or datetime.now() > datetime.strptime(res[0], '%Y-%m-%d %H:%M:%S'):
+                flash('This attendance session has closed.', 'danger')
+                return redirect(url_for('mark_attendance'))
+                
+            # Check if already signed
+            cursor.execute('SELECT id FROM attendance_records WHERE session_id = ? AND matric_no = ?', (session_id, matric_no))
+            if cursor.fetchone():
+                flash('You have already signed attendance for this session.', 'warning')
+            else:
+                cursor.execute('INSERT INTO attendance_records (session_id, matric_no, student_name) VALUES (?, ?, ?)',
+                               (session_id, matric_no, student_name))
+                conn.commit()
+                flash('Attendance marked successfully!', 'success')
+                return redirect(url_for('mark_attendance'))
+                
+    return render_template('attendance.html', active_sessions=active_sessions)
+
+@app.route('/admin/attendance/<int:session_id>')
+def view_attendance(session_id):
+    if session.get('role') != 'admin':
+        return redirect(url_for('admin_login'))
+        
+    with sqlite3.connect('geophysics.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM attendance_sessions WHERE id = ?', (session_id,))
+        att_session = cursor.fetchone()
+        
+        cursor.execute('SELECT matric_no, student_name, timestamp FROM attendance_records WHERE session_id = ? ORDER BY timestamp ASC', (session_id,))
+        records = cursor.fetchall()
+        
+    return render_template('view_attendance.html', att_session=att_session, records=records)
