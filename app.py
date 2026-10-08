@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request, redirect, url_for, session, jsonify, send_file
+from flask import Flask, render_template_string, request, redirect, url_for, session, jsonify, send_file, send_from_directory
 from datetime import datetime
 import sqlite3
 import io
@@ -16,10 +16,10 @@ def init_db():
     cursor.execute('''CREATE TABLE IF NOT EXISTS announcements (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, content TEXT NOT NULL, date TEXT NOT NULL, urgent INTEGER DEFAULT 0, likes INTEGER DEFAULT 0, helpful INTEGER DEFAULT 0, important INTEGER DEFAULT 0)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, announcement_id INTEGER, author TEXT NOT NULL, text TEXT NOT NULL, date TEXT NOT NULL, FOREIGN KEY (announcement_id) REFERENCES announcements (id) ON DELETE CASCADE)''')
     cursor.execute('''CREATE TABLE IF NOT EXISTS materials (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, course_code TEXT NOT NULL, filename TEXT NOT NULL, mimetype TEXT NOT NULL, file_data BLOB NOT NULL, date TEXT NOT NULL)''')
-    
+
     cursor.execute('SELECT COUNT(*) FROM announcements')
     if cursor.fetchone()[0] == 0:
-        cursor.execute('INSERT INTO announcements (title, content, date, urgent, likes, helpful, important) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+        cursor.execute('INSERT INTO announcements (title, content, date, urgent, likes, helpful, important) VALUES (?, ?, ?, ?, ?, ?, ?)',
                        ("Welcome to FUNAAB Geophysics Official Portal", "Official 2026 academic broadcast channel for the Department of Geophysics, FUNAAB.", datetime.now().strftime("%b %d, %Y - %I:%M %p"), 0, 42, 28, 35))
         cursor.execute('INSERT INTO comments (announcement_id, author, text, date) VALUES (?, ?, ?, ?)', (1, "Class Rep", "Department portal active! 🌍⚡", "Oct 7"))
     conn.commit()
@@ -58,6 +58,10 @@ def manifest():
 def service_worker():
     return app.response_class("self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => self.clients.claim());", mimetype='application/javascript')
 
+@app.route('/OneSignalSDKWorker.js')
+def onesignal_worker():
+    return send_from_directory('static', 'OneSignalSDKWorker.js')
+
 @app.route('/', methods=['GET', 'POST'])
 def login():
     error = None
@@ -79,6 +83,15 @@ def login():
     <head>
         <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FUNAAB Geophysics - Login</title><link rel="manifest" href="/manifest.json">
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+              appId: "YOUR-ONESIGNAL-APP-ID",
+            });
+          });
+        </script>
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { background: #022c22; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #022c22, #064e3b, #111827); position: relative; overflow: hidden; }
@@ -130,6 +143,15 @@ def admin_login():
     <head>
         <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FUNAAB Geophysics - Admin Gateway</title><link rel="manifest" href="/manifest.json">
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+              appId: "YOUR-ONESIGNAL-APP-ID",
+            });
+          });
+        </script>
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { background: #022c22; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #022c22, #064e3b, #111827); position: relative; overflow: hidden; }
@@ -175,6 +197,15 @@ def home():
     <head>
         <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FUNAAB Geophysics - Home</title><link rel="manifest" href="/manifest.json">
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+              appId: "YOUR-ONESIGNAL-APP-ID",
+            });
+          });
+        </script>
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { background: #022c22; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; padding-bottom: 100px; background: linear-gradient(135deg, #022c22, #064e3b, #111827); text-align: center; position: relative; overflow: hidden; }
@@ -266,6 +297,15 @@ def dashboard():
     <head>
         <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FUNAAB Geophysics - Announcements</title><link rel="manifest" href="/manifest.json">
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+              appId: "YOUR-ONESIGNAL-APP-ID",
+            });
+          });
+        </script>
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { background: #022c22; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 95px; background: linear-gradient(135deg, #022c22, #064e3b, #111827); min-height: 100vh; position: relative; }
@@ -460,6 +500,15 @@ def materials():
     <head>
         <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FUNAAB Geophysics - Course Materials</title><link rel="manifest" href="/manifest.json">
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+              appId: "YOUR-ONESIGNAL-APP-ID",
+            });
+          });
+        </script>
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { background: #022c22; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 95px; background: linear-gradient(135deg, #022c22, #064e3b, #111827); min-height: 100vh; position: relative; }
@@ -580,7 +629,7 @@ def download_material(mat_id):
 def admin_dashboard():
     if not session.get('authenticated') or not session.get('is_admin'):
         return redirect(url_for('admin_login'))
-    
+
     success_msg = None
     if request.method == 'POST':
         action_type = request.form.get('action_type')
@@ -602,7 +651,7 @@ def admin_dashboard():
                 date_str = datetime.now().strftime("%b %d, %Y")
                 conn = sqlite3.connect(DB_NAME, timeout=30.0)
                 cursor = conn.cursor()
-                cursor.execute('INSERT INTO materials (title, course_code, filename, mimetype, file_data, date) VALUES (?, ?, ?, ?, ?, ?)', 
+                cursor.execute('INSERT INTO materials (title, course_code, filename, mimetype, file_data, date) VALUES (?, ?, ?, ?, ?, ?)',
                                (title, course_code, filename, mimetype, file_data, date_str))
                 conn.commit()
                 conn.close()
@@ -626,6 +675,15 @@ def admin_dashboard():
     <head>
         <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>FUNAAB Geophysics - Admin Control Panel</title><link rel="manifest" href="/manifest.json">
+        <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+        <script>
+          window.OneSignalDeferred = window.OneSignalDeferred || [];
+          window.OneSignalDeferred.push(async function(OneSignal) {
+            await OneSignal.init({
+              appId: "YOUR-ONESIGNAL-APP-ID",
+            });
+          });
+        </script>
         <style>
             * { box-sizing: border-box; margin: 0; padding: 0; }
             body { background: #022c22; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding-bottom: 95px; background: linear-gradient(135deg, #022c22, #064e3b, #111827); min-height: 100vh; position: relative; }
@@ -670,7 +728,7 @@ def admin_dashboard():
         </header>
         <div class="container">
             {% if success_msg %}<div class="success-alert">{{ success_msg }}</div>{% endif %}
-            
+
             <div class="admin-box">
                 <h3>✍️ Publish Official Broadcast</h3>
                 <form method="POST">
@@ -790,77 +848,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, threaded=True)
-from datetime import datetime, timedelta
-
-@app.route('/admin/create_attendance', methods=['POST'])
-def create_attendance():
-    if session.get('role') != 'admin':
-        return redirect(url_for('admin_login'))
-    
-    course_code = request.form.get('course_code')
-    title = request.form.get('title')
-    duration = int(request.form.get('duration', 10)) # default 10 mins
-    
-    expires_at = datetime.now() + timedelta(minutes=duration)
-    
-    with sqlite3.connect('geophysics.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO attendance_sessions (course_code, title, duration_minutes, expires_at)
-            VALUES (?, ?, ?, ?)
-        ''', (course_code, title, duration, expires_at.strftime('%Y-%m-%d %H:%M:%S')))
-        conn.commit()
-        
-    flash('Attendance session opened successfully!', 'success')
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/attendance', methods=['GET', 'POST'])
-def mark_attendance():
-    # Get active sessions that haven't expired yet
-    now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    with sqlite3.connect('geophysics.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM attendance_sessions WHERE expires_at > ? ORDER BY id DESC', (now_str,))
-        active_sessions = cursor.fetchall()
-        
-    if request.method == 'POST':
-        session_id = request.form.get('session_id')
-        matric_no = request.form.get('matric_no').strip().upper()
-        student_name = request.form.get('student_name').strip()
-        
-        with sqlite3.connect('geophysics.db') as conn:
-            cursor = conn.cursor()
-            # Check if session is still active
-            cursor.execute('SELECT expires_at FROM attendance_sessions WHERE id = ?', (session_id,))
-            res = cursor.fetchone()
-            if not res or datetime.now() > datetime.strptime(res[0], '%Y-%m-%d %H:%M:%S'):
-                flash('This attendance session has closed.', 'danger')
-                return redirect(url_for('mark_attendance'))
-                
-            # Check if already signed
-            cursor.execute('SELECT id FROM attendance_records WHERE session_id = ? AND matric_no = ?', (session_id, matric_no))
-            if cursor.fetchone():
-                flash('You have already signed attendance for this session.', 'warning')
-            else:
-                cursor.execute('INSERT INTO attendance_records (session_id, matric_no, student_name) VALUES (?, ?, ?)',
-                               (session_id, matric_no, student_name))
-                conn.commit()
-                flash('Attendance marked successfully!', 'success')
-                return redirect(url_for('mark_attendance'))
-                
-    return render_template('attendance.html', active_sessions=active_sessions)
-
-@app.route('/admin/attendance/<int:session_id>')
-def view_attendance(session_id):
-    if session.get('role') != 'admin':
-        return redirect(url_for('admin_login'))
-        
-    with sqlite3.connect('geophysics.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT * FROM attendance_sessions WHERE id = ?', (session_id,))
-        att_session = cursor.fetchone()
-        
-        cursor.execute('SELECT matric_no, student_name, timestamp FROM attendance_records WHERE session_id = ? ORDER BY timestamp ASC', (session_id,))
-        records = cursor.fetchall()
-        
-    return render_template('view_attendance.html', att_session=att_session, records=records)
